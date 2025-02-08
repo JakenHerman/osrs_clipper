@@ -20,21 +20,21 @@ impl S3Querier {
     /// * `endpoint` - An optional endpoint override (e.g. Some("http://127.0.0.1:9000")
     ///   to use a local S3-compatible service like MinIO).
     pub async fn new(bucket: &str, endpoint: Option<&str>) -> Result<Self> {
-      let mut config = aws_sdk_s3::Config::builder()
-        .region(Region::new("us-east-1"))
-        .behavior_version(BehaviorVersion::v2024_03_28());
+        let mut config = aws_sdk_s3::Config::builder()
+            .region(Region::new("us-east-1"))
+            .behavior_version(BehaviorVersion::v2024_03_28());
 
-      if let Some(ep) = endpoint {
-          config = config.endpoint_url(ep);
-      }
+        if let Some(ep) = endpoint {
+            config = config.endpoint_url(ep);
+        }
 
-      let client = Client::from_conf(config.build());
+        let client = Client::from_conf(config.build());
 
-      Ok(S3Querier {
-          client,
-          bucket: bucket.to_string(),
-          endpoint: endpoint.map(|s| s.to_string()),
-      })
+        Ok(S3Querier {
+            client,
+            bucket: bucket.to_string(),
+            endpoint: endpoint.map(|s| s.to_string()),
+        })
     }
 
     /// Lists the object keys in the bucket.
@@ -45,13 +45,19 @@ impl S3Querier {
             .bucket(&self.bucket)
             .send()
             .await?;
-        
+
         let mut clips = Vec::new();
         for obj in resp.contents.unwrap_or_default() {
             let key = obj.key.as_deref().unwrap_or_default();
             let clip = Clip {
                 id: key.to_string(),
-                s3_url: format!("{}/clips/{}", self.endpoint.clone().unwrap_or("https://s3.amazonaws.com".to_string()), key),
+                s3_url: format!(
+                    "{}/clips/{}",
+                    self.endpoint
+                        .clone()
+                        .unwrap_or("https://s3.amazonaws.com".to_string()),
+                    key
+                ),
             };
             clips.push(clip);
         }

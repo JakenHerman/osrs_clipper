@@ -1,7 +1,7 @@
 use anyhow::Result;
 use aws_config::BehaviorVersion;
-use aws_sdk_s3::Client;
 use aws_sdk_s3::primitives::ByteStream;
+use aws_sdk_s3::Client;
 use aws_types::region::Region;
 use tokio::fs;
 
@@ -39,11 +39,7 @@ impl S3Uploader {
     /// Uploads the file at `file_path` to the S3 bucket using the specified `object_key`.
     ///
     /// Returns the URL where the object is available.
-    pub async fn upload_file(
-        &self,
-        file_path: &str,
-        object_key: &str,
-    ) -> Result<String> {
+    pub async fn upload_file(&self, file_path: &str, object_key: &str) -> Result<String> {
         // Read the file's contents.
         let file_bytes = fs::read(file_path).await?;
         let body = ByteStream::from(file_bytes);
