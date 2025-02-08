@@ -1,5 +1,7 @@
 # OSRS Clipper
 
+<img src="https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fwww.pngitem.com%2Fpimgs%2Fm%2F121-1219619_gnome-child-png-runescape-gnome-child-transparent-png.png&f=1&nofb=1&ipt=097263fd0d734cfb819ba235435dc52b07f0557d42d386a5ea5598ed5365437f&ipo=images" />
+
 Our goal is to build an OSRS RuneScape clipping tool that does the following:
 
  - [ ] Detect Key Moments: Analyze an OSRS video stream to identify events like loot drops, PvP kills, or level-ups using computer vision or AI.
