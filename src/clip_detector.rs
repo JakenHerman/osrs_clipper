@@ -1,10 +1,7 @@
 use anyhow::{ensure, Result};
 use log::debug;
 use std::process::Command;
-use tokio::{
-    sync::mpsc,
-    time::Duration,
-};
+use tokio::{sync::mpsc, time::Duration};
 
 use opencv::{core, imgcodecs, imgproc, prelude::*, videoio};
 
@@ -23,15 +20,21 @@ fn spawn_detection_task(
     tokio::task::spawn_blocking(move || -> opencv::Result<()> {
         let templates = load_templates(&template_paths)?;
         if templates.is_empty() {
-          return Err(opencv::Error::new(opencv::core::StsError, "No valid templates loaded. Exiting detection task.".to_string()));
+            return Err(opencv::Error::new(
+                opencv::core::StsError,
+                "No valid templates loaded. Exiting detection task.".to_string(),
+            ));
         }
 
         // Open the video capture.
         // For a Twitch stream, the video_url is the HLS URL.
         let mut cap = videoio::VideoCapture::from_file(&video_url, videoio::CAP_FFMPEG)?;
-        
+
         if !cap.is_opened()? {
-            return Err(opencv::Error::new(opencv::core::StsError, format!("Failed to open video stream at {}", video_url)));
+            return Err(opencv::Error::new(
+                opencv::core::StsError,
+                format!("Failed to open video stream at {}", video_url),
+            ));
         }
 
         loop {
@@ -158,8 +161,11 @@ pub async fn process_video_stream_realtime(video_url: &str, s3_bucket: String) -
     let detection_threshold = 0.5_f32;
 
     // Spawn the detection task.
-    let mut detection_rx =
-        spawn_detection_task(video_url.to_string(), template_paths.iter().map(|s| s.to_string()).collect(), detection_threshold);
+    let mut detection_rx = spawn_detection_task(
+        video_url.to_string(),
+        template_paths.iter().map(|s| s.to_string()).collect(),
+        detection_threshold,
+    );
 
     // Listen for detection events.
     while let Some(()) = detection_rx.recv().await {
