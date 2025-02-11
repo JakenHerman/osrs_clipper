@@ -1,8 +1,10 @@
 mod api;
+mod aws;
 mod clip_detector;
 mod s3_querier;
 mod s3_uploader;
 mod transcribe;
+mod utilities;
 
 use anyhow::Result;
 use env_logger;
@@ -14,7 +16,7 @@ async fn main() -> Result<()> {
     let _ = tracing_subscriber::fmt::try_init();
 
     // Use Streamlink to get HLS stream
-    let twitch_user = "mmorpg";
+    let twitch_user = "monimu";
     let hls = std::process::Command::new("streamlink")
         .args(&[
             &format!("https://www.twitch.tv/{}", twitch_user),
@@ -29,7 +31,7 @@ async fn main() -> Result<()> {
     // Spawn the video processing task.
     let processing = tokio::spawn(async move {
         println!("Spawning video processing task");
-        if let Err(e) = transcribe::transcribe_stream_and_save(&video_path).await {
+        if let Err(e) = transcribe::transcribe_stream_and_save(&video_path, &s3_bucket).await {
             eprintln!("Video processing error: {:?}", e);
         }
     });

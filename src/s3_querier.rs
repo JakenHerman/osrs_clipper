@@ -2,7 +2,6 @@ use anyhow::Result;
 use aws_config::BehaviorVersion;
 use aws_sdk_s3::Client;
 use aws_types::region::Region;
-use tokio::io::AsyncWriteExt;
 
 use crate::api::Clip;
 
@@ -47,36 +46,59 @@ impl S3Querier {
             .await?;
 
         let mut clips = Vec::new();
+        let mut clip = Clip {
+            ..Default::default()
+        };
+
         for obj in resp.contents.unwrap_or_default() {
-            let key = obj.key.as_deref().unwrap_or_default();
-            let clip = Clip {
-                id: key.to_string(),
-                s3_url: format!(
-                    "{}/clips/{}",
-                    self.endpoint
-                        .clone()
-                        .unwrap_or("https://s3.amazonaws.com".to_string()),
-                    key
-                ),
-            };
-            clips.push(clip);
+            let dir = obj.key.as_deref().unwrap_or_default().split("/").next().unwrap_or_default();
+            if clip.id.is_empty() {
+                clip.id = dir.to_string();
+            } else if clip.id != dir {
+                clips.push(clip);
+                clip = Clip {
+                    ..Default::default()
+                };
+                clip.id = dir.to_string();
+            }
+
+            let key = obj.key.as_deref().unwrap_or_default().split("/").last().unwrap_or_default();
+            // match last 3 characters of key to determine type
+            let key_type = &key[key.len() - 3..];
+            match key_type {
+                "mp4" => {
+                    clip.video.id = key.to_string();
+                    clip.video.s3_url = format!(
+                        "{}/clips/{}",
+                        self.endpoint
+                            .clone()
+                            .unwrap_or("https://s3.amazonaws.com".to_string()),
+                        key
+                    );
+                }
+                "srt" => {
+                    clip.transcript.id = key.to_string();
+                    clip.transcript.s3_url = format!(
+                        "{}/clips/{}",
+                        self.endpoint
+                            .clone()
+                            .unwrap_or("https://s3.amazonaws.com".to_string()),
+                        key
+                    );
+                }
+                "wav" => {
+                    clip.audio.id = key.to_string();
+                    clip.audio.s3_url = format!(
+                        "{}/clips/{}",
+                        self.endpoint
+                            .clone()
+                            .unwrap_or("https://s3.amazonaws.com".to_string()),
+                        key
+                    );
+                }
+                _ => {}
+            }
         }
         Ok(clips)
-    }
-
-    /// Fetches the object data for the given `object_key` (i.e. a clip).
-    ///
-    /// Returns the object’s bytes.
-    pub async fn get_clip(&self, object_key: &str) -> Result<Vec<u8>> {
-        let resp = self
-            .client
-            .get_object()
-            .bucket(&self.bucket)
-            .key(object_key)
-            .send()
-            .await?;
-        // Collect the streaming body into memory.
-        let data = resp.body.collect().await?;
-        Ok(data.into_bytes().to_vec())
     }
 }
