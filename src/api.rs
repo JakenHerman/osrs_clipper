@@ -3,8 +3,16 @@ use serde::Serialize;
 
 use crate::s3_querier::S3Querier;
 
-#[derive(Serialize)]
+#[derive(Serialize, Default)]
 pub struct Clip {
+    pub id: String,
+    pub audio: ClipData,
+    pub video: ClipData,
+    pub transcript: ClipData
+}
+
+#[derive(Serialize, Default)]
+pub struct ClipData {
     pub id: String,
     pub s3_url: String,
 }

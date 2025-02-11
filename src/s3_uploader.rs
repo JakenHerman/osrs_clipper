@@ -61,6 +61,7 @@ impl S3Uploader {
             format!("https://{}.s3.amazonaws.com/{}", self.bucket, object_key)
         };
 
+        println!("Successfully uploaded file to {}", url);
         Ok(url)
     }
 }
